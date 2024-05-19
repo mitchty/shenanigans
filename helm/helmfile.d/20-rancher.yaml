@@ -1,0 +1,17 @@
+repositories:
+  - name: rancher
+    url: https://releases.rancher.com/server-charts/latest
+releases:
+  - name: rancher
+    namespace: cattle-system
+#    version: "2.8.4"
+    chart: rancher/rancher
+    wait: true
+    timeout: 900
+    set:
+      - name: hostname
+        value: vip.dev.home.arpa
+      - name: bootstrapPassword
+        value: changeme
+      - name: ingress.tls.source
+        value: secret

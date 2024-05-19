@@ -1,0 +1,4 @@
+---
+helmDefaults:
+  wait: true
+  timeout: 900 # we might run on slow af systems...

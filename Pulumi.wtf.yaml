@@ -1,0 +1,261 @@
+---
+encryptionsalt: "v1:JQi6QySC9hs=:v1:+WVAWjJTVa6CXN14:xZHy9M4mDpgp2ISPVTehsQXjZpLJ6g=="
+config:
+  # libvirt provider uri, this is the default
+  libvirt:uri: "qemu+unix:///system"
+  shenanigans:inputs:
+    - uri: "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-1.0.0-NoCloud-Build6.56.qcow2"
+      sha256sum: &boot "989f3aa9a1ef5a3e289620c7190c62831a6f1b9669506edab6f713a956e7a976"
+      # This no longer exists upstream diff shasum as a note
+    # - uri: "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-1.0.0-NoCloud-Build2.10.qcow2"
+    #   # sha256sum: &boot "a83568fd3352ee0dd6eff1747a23825a7472326a720f218cd138c632a2cb215f"
+    #   sha256sum: "d0d98b6d7c9d904d0c9146b56bd34d04df0c9a27719c8fdd698d5b5319063de9"        # doesn't get dhcp ip???
+    # - uri: "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.5/images/openSUSE-Leap-15.5.x86_64-1.0.0-NoCloud-Build2.10.qcow2"
+    #   sha256sum: &boot "a83568fd3352ee0dd6eff1747a23825a7472326a720f218cd138c632a2cb215f"
+    # 1.26.10
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.26.10%2Brke2r2/sha256sum-amd64.txt"
+    #   sha256sum: "032f0ffa7ff5159437a775c7ecf379eb7cb1bdec74347c1f1a7fbd4278cae7a8"
+    #   remote:
+    #     dest: /tmp/rke2/sha256sum-amd64.txt
+    #     mode: "0600"
+    #     owner: root
+    #     group: root    
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.26.10%2Brke2r2/rke2.linux-amd64.tar.gz"
+    #   sha256sum: "3a6d8c9bef20fce9885c46407b3f8b55aa914c640365c888d31ca3849537cbd2"
+    #   remote:
+    #     dest: /tmp/rke2/rke2.linux-amd64.tar.gz
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.26.10%2Brke2r2/rke2-images.linux-amd64.tar.zst"
+    #   sha256sum: "10ef74a9e43473885d5a1dfca3f67dcae68810c7ecd65c0201e713d13c9dd020"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.26.10%2Brke2r2/rke2-images-core.linux-amd64.tar.zst"
+    #   sha256sum: "0bcd70db9e796aa6fa3a1611d8f1b005199c0f84e25fbb25e7d14f5dfe62ad3d"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images-core.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.26.10%2Brke2r2/rke2-images-cilium.linux-amd64.tar.zst"
+    #   sha256sum: "f3515f907e86ef007e59eb33ab8de8df61431bf7ef424f5fb5301863e6f0db87"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images-cilium.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # 1.27.14
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/sha256sum-amd64.txt"
+      sha256sum: "84b6b2a09cda4019aa01c018827cb36fd62f5d977187fdde87d113f89647bbdb"
+      remote:
+        dest: /tmp/rke2/sha256sum-amd64.txt
+        mode: "0600"
+        owner: root
+        group: root
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2.linux-amd64.tar.gz"
+      sha256sum: "48a96bc3817ff01633195a8e8be62f142f22924fc0c95a4604b57bdb6c10b411"
+      remote:
+        dest: /tmp/rke2/rke2.linux-amd64.tar.gz
+        mode: "0600"
+        owner: root
+        group: root
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images.linux-amd64.tar.zst"
+#      sha256sum: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      sha256sum: "5ee20d728d380aa2e999646a3a8e37c66fd244cdfd3775c50bae90033ec03b4b"
+      remote:
+        dest: /tmp/rke2/rke2-images.linux-amd64.tar.zst
+        mode: "0600"
+        owner: root
+        group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images-core.linux-amd64.tar.zst"
+    #   sha256sum: "af071244557fc12e6a0870ebfc5896fcd5786f40ffd590cb1efb979de3f021b0"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images-core.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images-cilium.linux-amd64.tar.zst"
+    #   sha256sum: "14d92a883d308b0a6246fcf61968a66c4bdb8c52a2eff28984aa7cd537170b1c"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images-cilium.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+ 
+    # rke2 install.sh script
+    - uri: "https://get.rke2.io"
+      sha256sum: "fb2d0000208d9f471c5eca30ce37f5783ae781deb4d1cd5ff9b4a0031c44171b"
+      tags: [k8s,rke2,server]
+      remote:
+        dest: /tmp/rke2/install.sh
+        mode: "0755"
+        owner: root
+        group: root
+    # WIP k3s 1.29.4-k3s1
+    # - uri: "https://github.com/k3s-io/k3s/releases/download/v1.29.4%2Bk3s1/k3s-airgap-images-amd64.tar.zst"
+    #   sha256sum: "cc60f496b9c70349c742ea0e640f9ed205adf97b824a7eb8158ef01061d65f1b"
+    #   tags: [k8s,k3s,server]
+    #   remote:
+    #     dest: /tmp/k3s/k3s-airgap-images-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/k3s-io/k3s/releases/download/v1.29.4%2Bk3s1/k3s"
+    #   sha256sum: "2bcc3f7ba201e219575c6b7c3663af409e6dde691903b9d049302134816cf0e6"
+    #   tags: [k8s,k3s,server]
+    #   remote:
+    #     dest: /tmp/k3s/k3s
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/k3s-io/k3s/releases/download/v1.29.4%2Bk3s1/sha256sum-amd64.txt"
+    #   sha256sum: "7eca64ebbfcf893a0bf2b695b4005d111740f1c2ffbb1d31d8a0169b9d0403e6"
+    #   tags: [k8s,k3s,server]
+    #   remote:
+    #     dest: /tmp/k3s/sha256sum-amd64.txt
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    #
+    # rke2 1.30.0-rke2-r1
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.30.0%2Brke2r1/rke2-images.linux-amd64.tar.zst"
+    #   sha256sum: "c01a80b0f04cec3960f1ea6ffa8bb1b332511dad342e6ecd0264d6c6e6376a40"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.30.0%2Brke2r1/rke2.linux-amd64.tar.gz"
+    #   sha256sum: "7af9939a09ff1d602f8ea0a92e1372f1f982cebfad456d94a66a411241ea5cd7"
+    #   tags: [k8s,rke2,server]
+    #   remote:
+    #     dest: /tmp/rke2/rke2.linux-amd64.tar.gz
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.30.0%2Brke2r1/sha256sum-amd64.txt"
+    #   sha256sum: "804ff306291803131f15c60f0e763b445b28cdbef426123ab861e34f3a333772"
+    #   tags: [k8s,rke2,server]
+    #   remote:
+    #     dest: /tmp/rke2/sha256sum-amd64.txt
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # Note: all vm's are for now on one flat /24 ipv4 address range to
+    # simplify network layout. TODO is to make that configurable at some
+    # point too.
+
+  shenanigans:units:
+    - name: upstream
+      kind: k8s
+      config:
+        - name: default
+          count: 1
+          qcow2: *boot
+          disksize: "40G"
+          memory: "4G"
+          cpu: 4
+        - name: agent
+          count: 3
+          qcow2: *boot
+          disksize: "40G"
+          memory: "12G"
+          cpu: 4
+    # - name: downstream-alpha
+    #   kind: k8s
+    #   config:
+    #     - name: default
+    #       count: 3
+    #       qcow2: *boot
+    #       disksize: "20G"
+    #       memory: "3G"
+    #       cpu: 4
+    #     - name: agent
+    #       count: 1
+    #       qcow2: *boot
+    #       disksize: "20G"
+    #       memory: "4G"
+    #       cpu: 4
+    # - name: downstream-beta
+    #   kind: k8s
+    #   config:
+    #     - name: default
+    #       count: 3
+    #       qcow2: *boot
+    #       disksize: "20G"
+    #       memory: "3G"
+    #       cpu: 2
+    #     - name: agent
+    #       count: 1
+    #       qcow2: *boot
+    #       disksize: "20G"
+    #       memory: "4G"
+    #       cpu: 4
+    # - name: downstream-chonkyboi
+    #   kind: k8s
+    #   config:
+    #     - name: default
+    #       count: 3
+    #       qcow2: *boot
+    #       disksize: "20G"
+    #       memory: "4G"
+    #       cpu: 4
+    #     - name: agent
+    #       count: 3
+    #       qcow2: *boot
+    #       disksize: "20G"
+    #       memory: "64G"
+    #       cpu: 8    
+    # - name: certmanager
+    #   kind: certmanager
+    #   after:
+    #     - k8s-admin
+    #   kind: helmchart
+#   shenanigans:groups:
+#       # Note we can have multiple k8s clusters built for us and let the
+#       # tooling join them for us when using rancher as an example.
+#       #
+#       # These will be custom clusters in that case but for the purposes
+#       # of this tooling that is fine. New groups could be defined to
+#       # create vm's in say vsphere via clusterapi once the management
+#       # cluster is created but thats a future task.
+# #       - name: default
+# # #        groups: []
+# #         after: []
+#       - name: k8s-admin
+# #        groups: [k8s, ]
+#         after: [] # not dependent on anything but the vm's it runs on
+#         kind: k8s
+#         # args:
+#         #   flavor: rke2
+#         config:
+#           # control plane is the "default" flavor
+#           - name: default
+#             count: 1 # No need to build a ton of control plane nodes by default or make them too big
+#             qcow2: *boot
+#             cpu: 2
+#             disksize: 20
+#             memory: 1
+#             # aka "worker" nodes, can be omitted entirely, and technically could be a different os if you want
+#           # - name: agent
+#           #   count: 1
+#           #   qcow2: *boot
+#           #   disksize: 20
+#           #   memory: 4
+#           #   cpu: 4
+# #       - name: kubevip-admin
+# # #        groups: [k8s, tooling]
+# #         after: [k8s-admin]
+# #         kind: helmchart
+# #         config: {} # no vm's needed for this, could be omitted
+# #         args:
+# #           vip-hostname: foo-bar.tld
+# #           vip-ip: 1.2.3.4
+# #       - name: rancher/manager
+# # #        groups: [k8s, tooling]
+# #         after: [k8s/admin, kubevip]
+# #         kind: helmchart

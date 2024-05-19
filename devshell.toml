@@ -1,0 +1,5 @@
+# https://numtide.github.io/devshell
+[[commands]]
+package = "pulumi-bin"
+name = "pulumi"
+help = "pulumi related stuff"
