@@ -1,13 +1,18 @@
 {
-  description = "virtual environments";
+  description = "quickstart shenanigans";
 
-  inputs.devshell.url = "github:numtide/devshell";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs =
+    {
+      nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
-  inputs.flake-compat = {
-    url = "github:edolstra/flake-compat";
-    flake = false;
-  };
+      devshell.url = "github:numtide/devshell";
+      flake-utils.url = "github:numtide/flake-utils";
+
+      flake-compat = {
+        url = "github:edolstra/flake-compat";
+        flake = false;
+      };
+    };
 
   outputs = { self, flake-utils, devshell, nixpkgs, ... }:
     flake-utils.lib.eachDefaultSystem (system: {
