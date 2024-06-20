@@ -249,6 +249,7 @@ kubelet-arg:
 								cnt = 0
 								fmt.Printf("node list failed %d\n", ncnt)
 								time.Sleep(1 * time.Second)
+								ncnt = ncnt + 1
 							} else {
 								ncnt = 0
 								// Ignore errors silently
