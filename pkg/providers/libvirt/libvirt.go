@@ -621,6 +621,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 		}
 
 		var workerInstalls []pulumi.Resource
+		var pkgInstalls []pulumi.Resource
 		// Wait for the node to become Ready first.
 		// Kick off the agent installs next, we'll do control plane nodes last
 		for _, vm := range unitMap["agent"] {
@@ -645,27 +646,62 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			if err != nil {
 				return err
 			}
+
+			if unit.Online {
+				zypperInOpenIscsi, err := remote.NewCommand(ctx,
+					fmt.Sprintf("%s:%s zypper -n in open-iscsi", unit.Name, vm.Host),
+					&remote.CommandArgs{
+						Connection: keyConnectionArgs,
+						Create:     pulumi.String("zypper -n in open-iscsi"),
+					}, pulumi.DependsOn(vmDepends))
+				if err != nil {
+					return err
+				}
+				pkgInstalls = append(pkgInstalls, zypperInOpenIscsi)
+
+				// TODO migrate all this into the
+				// remote command, this can fail with
+				// errno7 cause ^^^ keeps locking the
+				// dam database, push the retries down
+				// to the remote command.
+				//
+				// zypperDup, err := remote.NewCommand(ctx,
+				// 	fmt.Sprintf("%s:%s zypper -n dup", unit.Name, vm.Host),
+				// 	&remote.CommandArgs{
+				// 		Connection: keyConnectionArgs,
+				// 		Create:     pulumi.String("zypper -n dup"),
+				// 	}, pulumi.DependsOn(pkgInstalls))
+				// if err != nil {
+				// 	return err
+				// }
+				// pkgInstalls = append(pkgInstalls, zypperDup)
+			}
+
 		}
 
 		vmDepends = append(vmDepends, k8sDepends...)
 		vmDepends = append(vmDepends, defaultInstalls...)
 		vmDepends = append(vmDepends, workerInstalls...)
+		vmDepends = append(vmDepends, pkgInstalls...)
 	}
 
-	if unit.Name == "upstream" {
+	// Do online related stuff.
+	if unit.Online {
 		localKubeconfig, err := state.RegisterArtifact(fmt.Sprintf("/%s/kube/config", unit.Name))
 		if err != nil {
 			return err
 		}
-		helmfileApply, err := local.NewCommand(ctx,
-			fmt.Sprintf("%s helmfile apply", unit.Name),
-			&local.CommandArgs{
-				Create: pulumi.Sprintf("cd helm && env KUBECONFIG=%s helmfile apply", localKubeconfig),
-			}, pulumi.DependsOn(vmDepends))
+		if unit.Name == "upstream" {
+			helmfileApply, err := local.NewCommand(ctx,
+				fmt.Sprintf("%s helmfile apply", unit.Name),
+				&local.CommandArgs{
+					Create: pulumi.Sprintf("cd helm && env KUBECONFIG=%s helmfile apply", localKubeconfig),
+				}, pulumi.DependsOn(vmDepends))
 
-		fmt.Sprintf("%v", helmfileApply)
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+			vmDepends = append(vmDepends, helmfileApply)
 		}
 	}
 

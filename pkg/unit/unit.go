@@ -12,6 +12,7 @@ type UserUnit struct {
 	Config []vm.UserConfig
 	Kind   string
 	Name   string
+	Online bool
 	//	Provider string //TODO for the future
 }
 
@@ -20,6 +21,7 @@ type Unit struct {
 	Config []vm.Config
 	Kind   string
 	Name   string
+	Online bool
 }
 
 // Custom format function for debugging more simply.
@@ -39,6 +41,7 @@ func (uu UserUnit) ToUnit() (u Unit, e error) {
 	u.After = uu.After
 	u.Kind = uu.Kind
 	u.Name = uu.Name
+	u.Online = uu.Online
 	var configs []vm.Config
 
 	for _, uc := range uu.Config {

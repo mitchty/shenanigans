@@ -1,8 +1,0 @@
----
-repositories:
-  - name: neuvector
-    url: https://neuvector.github.io/neuvector-helm/
-releases:
-  - name: neuvector
-    namespace: neuvector
-    chart: neuvector/core

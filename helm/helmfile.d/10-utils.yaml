@@ -1,0 +1,30 @@
+# Note: split apart as without helm diff fails with Issuer crd's that
+# don't exist trying to figure out what rancher actions will be
+# performed.
+#
+# All in the same helmfile to get more parallelization.
+---
+helmDefaults:
+  wait: true
+  timeout: 900 # default timeouts fail for neuvector a lot, and longhorn for that matter
+repositories:
+  - name: jetstack
+    url: https://charts.jetstack.io
+  - name: longhorn
+    url:  https://charts.longhorn.io
+  - name: neuvector
+    url: https://neuvector.github.io/neuvector-helm
+releases:
+  - name: cert-manager
+    namespace: cert-manager
+    version: "v1.15.0"
+    chart: jetstack/cert-manager
+    set:
+      - name: crds.enabled
+        value: true
+  - name: longhorn
+    namespace: longhorn-system
+    chart: longhorn/longhorn
+  - name: neuvector
+    namespace: cattle-neuvector-system
+    chart: neuvector/core
