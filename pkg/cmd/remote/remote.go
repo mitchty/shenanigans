@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +46,7 @@ func Cmd() error {
 					prime := flag.Bool("prime", false, "Is this the first control plane node?")
 					worker := flag.Bool("worker", false, "Is this node a worker node?")
 					upstream := flag.String("upstream", "", "For all non prime nodes the upstream ip/host to join a cluster")
+					vip := flag.String("vip", "", "If a vip will be used for the cluster fqdn:ip")
 
 					flag.Parse()
 
@@ -147,12 +149,18 @@ kubelet-arg:
 						// 	return err
 						// }
 						// rke2Tls := []byte(fmt.Sprintf("tls-san:\n  - %s.dev.home.arpa\n", hostname))
-						rke2Tls := []byte(fmt.Sprintf("tls-san:\n  - 10.200.200.2\n  - vip.dev.home.arpa\n"))
 
 						// kubelet-arg:
 						// - protect-kernel-defaults=true
 						rke2Config = append(rke2Config, rke2Rest...)
-						rke2Config = append(rke2Config, rke2Tls...)
+
+						if *vip != "" {
+							parts := strings.Split(*vip, ":")
+
+							rke2Tls := []byte(fmt.Sprintf("tls-san:\n  - %s\n  - %s\n", parts[1], parts[0]))
+
+							rke2Config = append(rke2Config, rke2Tls...)
+						}
 					}
 
 					// Everyone but the prime node goes to the prime node for setup

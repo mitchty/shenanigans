@@ -23,6 +23,7 @@ import (
 	"deploy/pkg/cloudinit"
 	"deploy/pkg/components/ssh"
 	"deploy/pkg/filecache"
+	"deploy/pkg/network"
 	"deploy/pkg/unit"
 	"deploy/pkg/vm"
 )
@@ -106,7 +107,7 @@ func randomString(length int) (string, error) {
 // sanely hard coding group dependency data cause whatever.
 //
 // Also most of this has zero dynamicism between backend providers.
-func SetupShared(ctx *pulumi.Context, state *cache.State) (LibvirtShared, error) {
+func SetupShared(ctx *pulumi.Context, state *cache.State, netconfig *network.Network) (LibvirtShared, error) {
 	var providerconfig LibvirtConfig
 	var shared LibvirtShared
 
@@ -150,17 +151,18 @@ func SetupShared(ctx *pulumi.Context, state *cache.State) (LibvirtShared, error)
 
 		// Mode:   pulumi.String("bridge"),
 		// Bridge: pulumi.String("virbr1"),
-		Domain: pulumi.String("dev.home.arpa"),
+		Domain: pulumi.String(netconfig.Domain),
 		Dhcp: &libvirt.NetworkDhcpArgs{
 			Enabled: pulumi.Bool(true),
 		},
 		Dns: &libvirt.NetworkDnsArgs{
 			Enabled:   pulumi.Bool(true),
 			LocalOnly: pulumi.Bool(true), // Don't forward local requests otherwise we end up looping if this dnsmasq instance is queried from the outside.
+			// TODO Figure out the generator interface to dynamically create all the hosts we might need
 			Hosts: libvirt.NetworkDnsHostArray{
 				&libvirt.NetworkDnsHostArgs{
-					Hostname: pulumi.String("vip"),
-					Ip:       pulumi.String("10.200.200.2"),
+					Hostname: pulumi.String(netconfig.Hosts[0].Name),
+					Ip:       pulumi.String(netconfig.Hosts[0].Ipv4),
 				},
 			},
 		},
@@ -207,12 +209,13 @@ type unitDepends struct {
 	Resource pulumi.Resource
 }
 
-func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *LibvirtShared, key *ssh.SshData, inputs *[]filecache.CachedFile) error {
+func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *LibvirtShared, key *ssh.SshData, inputs *[]filecache.CachedFile, netconfig *network.Network) error {
 	// unitUuid := uuid.New().String()
 
 	var vmDomains []libvirt.Domain
 	var vmDepends []pulumi.Resource
 	var fileDepends []pulumi.Resource
+	var pkgInstalls []pulumi.Resource
 
 	// index 0 vm is treated as special
 	var prime unitDepends
@@ -274,7 +277,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			if err != nil {
 				return err
 			}
-			userData, err := cloudinit.UserData(hostName, *key.PubKey)
+			userData, err := cloudinit.UserData(hostName, *key.PubKey, netconfig.Domain)
 			err = ioutil.WriteFile(userDataFile, userData, 0600)
 			if err != nil {
 				return err
@@ -388,6 +391,19 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			)
 			if err != nil {
 				return err
+			}
+
+			if unit.Online {
+				zypperInOpenIscsi, err := remote.NewCommand(ctx,
+					fmt.Sprintf("%s:%s zypper -n in open-iscsi", unit.Name, hostName),
+					&remote.CommandArgs{
+						Connection: keyConnectionArgs,
+						Create:     pulumi.String("zypper -n in open-iscsi"),
+					}, pulumi.DependsOn(vmDepends))
+				if err != nil {
+					return err
+				}
+				pkgInstalls = append(pkgInstalls, zypperInOpenIscsi)
 			}
 
 			componentName := "shenanigans:libvirt:vm"
@@ -530,6 +546,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 		// }
 	}
 
+	sshName := fmt.Sprintf("%s:ssh-config", unit.Name)
 	// Only write the config file if all the vm's came up,
 	// if not its likely system is OOM or ENOSPC or who
 	// knows but no point in writing this out at this point.
@@ -538,12 +555,14 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 		return err
 	}
 	_, err = local.NewCommand(ctx,
-		fmt.Sprintf("%s:ssh-config", unit.Name),
+		sshName,
 		&local.CommandArgs{
 			Create: pulumi.Sprintf("echo '%s' > %s", sshConfigFileContent, sshConfigFile),
 		},
 		pulumi.DependsOn(vmDepends),
 	)
+
+	ctx.Export(sshName, pulumi.String(sshConfigFile))
 
 	// k8s kind setup work
 	k8sDepends := vmDepends
@@ -563,7 +582,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			fmt.Sprintf("%s:%s k8s prime", unit.Name, prime.Host),
 			&remote.CommandArgs{
 				Connection: keyConnectionArgs,
-				Create:     pulumi.Sprintf("%s k8s --prime", "/usr/local/sbin/remote"),
+				Create:     pulumi.Sprintf("%s k8s --prime --vip %s:%s", "/usr/local/sbin/remote", netconfig.Hosts[0].Ipv4, netconfig.Hosts[0].Fqdn),
 			}, pulumi.DependsOn(k8sDepends),
 		)
 		if err != nil {
@@ -572,6 +591,8 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 
 		// Everyone depends on the prime install being setup and Ready
 		k8sDepends = append(k8sDepends, k8sInstall)
+
+		kubeName := fmt.Sprintf("%s:kube-config", unit.Name)
 
 		// Copy over the kubeconfig file from the first node into artifacts
 		localKubeconfig, err := state.RegisterArtifact(fmt.Sprintf("/%s/kube/config", unit.Name))
@@ -592,6 +613,8 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			return err
 		}
 
+		ctx.Export(kubeName, pulumi.String(localKubeconfig))
+
 		//		fmt.Printf("len of unit %s agents is %d\n", unit.Name, len(unitMap["agent"]))
 
 		// The rest of the control-plane/admin/server nodes (if any)
@@ -607,7 +630,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 				PrivateKey: pulumi.Sprintf("%s", *key.PrvKey),
 			}
 			anadmin, err := remote.NewCommand(ctx,
-				fmt.Sprintf("%s:%s k8s admin", unit.Name, vm.Host),
+				fmt.Sprintf("%s:%s k8s admin --vip %s:%s", unit.Name, vm.Host, netconfig.Hosts[0].Ipv4, netconfig.Hosts[0].Fqdn),
 				&remote.CommandArgs{
 					Connection: keyConnectionArgs,
 					Create:     pulumi.Sprintf("%s k8s --upstream %s", "/usr/local/sbin/remote", primeip4),
@@ -621,7 +644,6 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 		}
 
 		var workerInstalls []pulumi.Resource
-		var pkgInstalls []pulumi.Resource
 		// Wait for the node to become Ready first.
 		// Kick off the agent installs next, we'll do control plane nodes last
 		for _, vm := range unitMap["agent"] {
@@ -646,52 +668,27 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			if err != nil {
 				return err
 			}
-
-			if unit.Online {
-				zypperInOpenIscsi, err := remote.NewCommand(ctx,
-					fmt.Sprintf("%s:%s zypper -n in open-iscsi", unit.Name, vm.Host),
-					&remote.CommandArgs{
-						Connection: keyConnectionArgs,
-						Create:     pulumi.String("zypper -n in open-iscsi"),
-					}, pulumi.DependsOn(vmDepends))
-				if err != nil {
-					return err
-				}
-				pkgInstalls = append(pkgInstalls, zypperInOpenIscsi)
-
-				// TODO migrate all this into the
-				// remote command, this can fail with
-				// errno7 cause ^^^ keeps locking the
-				// dam database, push the retries down
-				// to the remote command.
-				//
-				// zypperDup, err := remote.NewCommand(ctx,
-				// 	fmt.Sprintf("%s:%s zypper -n dup", unit.Name, vm.Host),
-				// 	&remote.CommandArgs{
-				// 		Connection: keyConnectionArgs,
-				// 		Create:     pulumi.String("zypper -n dup"),
-				// 	}, pulumi.DependsOn(pkgInstalls))
-				// if err != nil {
-				// 	return err
-				// }
-				// pkgInstalls = append(pkgInstalls, zypperDup)
-			}
-
 		}
 
 		vmDepends = append(vmDepends, k8sDepends...)
 		vmDepends = append(vmDepends, defaultInstalls...)
 		vmDepends = append(vmDepends, workerInstalls...)
-		vmDepends = append(vmDepends, pkgInstalls...)
 	}
 
 	// Do online related stuff.
 	if unit.Online {
+		vmDepends = append(vmDepends, pkgInstalls...)
+
 		localKubeconfig, err := state.RegisterArtifact(fmt.Sprintf("/%s/kube/config", unit.Name))
 		if err != nil {
 			return err
 		}
-		if unit.Name == "upstream" {
+
+		// If we're installing kube-vip, do that now then
+		// replace the ^^^ kubeconfig file with the vip for
+		// later usage that doesn't depend directly upon the
+		// prime node.
+		if unit.Name == "upstream" && os.Getenv("NOHELMFILE") == "" {
 			helmfileApply, err := local.NewCommand(ctx,
 				fmt.Sprintf("%s helmfile apply", unit.Name),
 				&local.CommandArgs{

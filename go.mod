@@ -5,14 +5,13 @@ go 1.22.0
 toolchain go1.22.4
 
 require (
+	github.com/3th1nk/cidr v0.2.0
 	github.com/adrg/xdg v0.4.0
 	github.com/docker/go-units v0.5.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20240428194347-eebcea082ee0
 	github.com/google/uuid v1.6.0
 	github.com/pulumi/pulumi-command/sdk v0.11.1
 	github.com/pulumi/pulumi-libvirt/sdk v0.4.6
-	github.com/pulumi/pulumi-openstack/sdk/v3 v3.15.2
-	github.com/pulumi/pulumi-tls/sdk/v4 v4.11.1
 	github.com/pulumi/pulumi/sdk/v3 v3.119.0
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/crypto v0.24.0
@@ -20,7 +19,9 @@ require (
 	helm.sh/helm/v3 v3.15.2
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
+	k8s.io/cli-runtime v0.30.0
 	k8s.io/client-go v0.30.2
+	k8s.io/kubectl v0.30.0
 )
 
 require (
@@ -196,11 +197,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.30.0 // indirect
 	k8s.io/apiserver v0.30.0 // indirect
-	k8s.io/cli-runtime v0.30.0 // indirect
 	k8s.io/component-base v0.30.0 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/kubectl v0.30.0 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	lukechampine.com/frand v1.4.2 // indirect
 	oras.land/oras-go v1.2.5 // indirect

@@ -4,6 +4,10 @@ helmDefaults:
 repositories:
   - name: rancher
     url: https://releases.rancher.com/server-charts/latest
+  - name: neuvector
+    url: https://neuvector.github.io/neuvector-helm
+  - name: longhorn
+    url:  https://charts.longhorn.io
 releases:
   - name: rancher
     namespace: cattle-system
@@ -16,3 +20,38 @@ releases:
         value: changeme
       - name: ingress.tls.source
         value: secret
+      - name: replicas
+        value: 1
+  # Install longhorn/neuvector after rancher is setup
+  - name: longhorn
+    namespace: longhorn-system
+    chart: longhorn/longhorn
+    set:
+      - name: defaultClassReplicaCount
+        value: 1
+      - name: csi.attacherReplicaCount
+        value: 1
+      - name: csi.provisionerReplicaCount
+        value: 1
+      - name: csi.resizerReplicaCount
+        value: 1
+      - name: csi.snapshotterReplicaCount
+        value: 1
+  - name: neuvector
+    namespace: cattle-neuvector-system
+    chart: neuvector/core
+    set:
+      - name: global.cattle.url
+        value: https://vip.dev.home.arpa
+      - name: controller.ranchersso.enabled
+        value: true
+      - name: rbac
+        value: true
+      - name: k3s.enabled
+        value: true
+      - name: cve.scanner.replicas
+        value: 1
+      - name: controller.replicas
+        value: 1
+      - name: manager.replicas
+        value: 1

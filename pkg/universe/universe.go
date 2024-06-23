@@ -16,6 +16,7 @@ import (
 	"deploy/pkg/cache"
 	"deploy/pkg/components/ssh"
 	"deploy/pkg/filecache"
+	"deploy/pkg/network"
 	"deploy/pkg/unit"
 
 	"deploy/pkg/providers/libvirt"
@@ -51,6 +52,8 @@ type Universe struct {
 	Inputs *[]filecache.CachedFile
 
 	Units *[]unit.Unit
+
+	Network *network.Network
 
 	// Ssh key data
 	Ssh *ssh.SshData
@@ -120,6 +123,14 @@ func NewUniverse(ctx *pulumi.Context, name string, opts ...pulumi.ResourceOption
 	}
 	gamma.Units = &units
 
+	var usernetwork network.UserNetwork
+	cfg.RequireObject("network", &usernetwork)
+	un, err := usernetwork.ToNetwork()
+	if err != nil {
+		return gamma, err
+	}
+	gamma.Network = &un
+
 	// TODOEach cached file should really become its own component
 	// that this depends upon Then I can let pulumi deal with
 	// having N things run at once/download everything in parallel
@@ -177,7 +188,7 @@ func NewUniverse(ctx *pulumi.Context, name string, opts ...pulumi.ResourceOption
 
 	// I'm a hack and hate object oriented, just make this a loop
 	// through providers at some point.
-	shared, err := libvirt.SetupShared(ctx, gamma.State)
+	shared, err := libvirt.SetupShared(ctx, gamma.State, gamma.Network)
 
 	if err != nil {
 		return gamma, err
@@ -200,14 +211,12 @@ func NewUniverse(ctx *pulumi.Context, name string, opts ...pulumi.ResourceOption
 		//
 		// If stuff depends on it we'll use that in the next loop.
 		if len(u.After) == 0 {
-			err = libvirt.Unit(ctx, gamma.State, &u, &shared, gamma.Ssh, gamma.Inputs)
+			err = libvirt.Unit(ctx, gamma.State, &u, &shared, gamma.Ssh, gamma.Inputs, gamma.Network)
 			if err != nil {
 				return gamma, err
 			}
 		}
 	}
-
-	//	fmt.Printf("unit names: %v\n", hackMap)
 
 	componentName := "shenanigans:universe:Universe"
 

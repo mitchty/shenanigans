@@ -61,11 +61,11 @@ type CloudInitUserConfig struct {
 //
 // For us, the second category is where this will end. Maybe adopt the juju approach.
 // Return the cloudinit user data we want
-func UserData(hostname string, authorized_key string) ([]byte, error) {
+func UserData(hostname string, authorized_key string, fqdn string) ([]byte, error) {
 	output := CloudInitUserData{
 		FinalMessage: "fin",
 		Hostname:     hostname,
-		Fqdn:         "dev.home.arpa",
+		Fqdn:         fqdn,
 		SshPwauth:    true,
 		Output: CloudInitUserOutput{
 			All: "| tee -a /var/log/cloud-init-output.log",

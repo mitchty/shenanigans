@@ -10,10 +10,6 @@ helmDefaults:
 repositories:
   - name: jetstack
     url: https://charts.jetstack.io
-  - name: longhorn
-    url:  https://charts.longhorn.io
-  - name: neuvector
-    url: https://neuvector.github.io/neuvector-helm
 releases:
   - name: cert-manager
     namespace: cert-manager
@@ -22,9 +18,3 @@ releases:
     set:
       - name: crds.enabled
         value: true
-  - name: longhorn
-    namespace: longhorn-system
-    chart: longhorn/longhorn
-  - name: neuvector
-    namespace: cattle-neuvector-system
-    chart: neuvector/core

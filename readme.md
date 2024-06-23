@@ -32,7 +32,7 @@ There are a number of stacks defined already. Feel free to use an existing stack
 To select this stack run:
 
 ```sh
-pulumi stack select rancher-rke2
+pulumi stack select -cs rancher
 ```
 
 ## Using a what a stack built
@@ -43,25 +43,39 @@ Once you have brought a stack up via:
 pulumi up -yf
 ```
 
-There will be a number of files in the `artifacts` directory as well as stack output variables to get at them.
+There will be a number of files in the `~/.cache/shenanigans` directory as well as stack output variables to aide in usage.
 
 ### To ssh into a vm
 
 
-Once the stack is up there will be a ssh-config file in your local checkout. You can use that to ssh into the vm:
+Once the stack is up there will be a ssh-config file in your XDG_CACHE dirt. You can use that to ssh into the vm group(s) like so:
 
 ```sh
-ssh -F $(pulumi stack output sshConfig) vm-suffix-xyz
+ssh -F $(find ~/.cache/shenanigans -name config -path '*/upstream/*ssh/*') vm0 uptime
+ 20:55:57  up   0:08,  0 users,  load average: 1.47, 1.32, 0.73
 ```
 
-You should also have a kubeconfig setup that can be used as well to navigate k8s remotely if you prefer:
+Once the stack is up you can alternatively use the stack output, note examples are using the rancher config which has a name of upstream:
 
 ```sh
-KUBECONFIG=$(pulumi stack output kubeconfigFile) kubectl get nodes
-NAME                  STATUS   ROLES         AGE    VERSION
-vm-dev-ubuntu-idx-0   Ready    etcd,master   2m3s   v1.19.5+k3s2
-vm-dev-ubuntu-idx-1   Ready    etcd,master   96s    v1.19.5+k3s2
-vm-dev-ubuntu-idx-2   Ready    etcd,master   66s    v1.19.5+k3s2
+ssh -F $(pulumi stack output upstream:ssh-config) vm0 uptime
+ 21:00:40  up   0:13,  0 users,  load average: 0.95, 1.25, 0.87
+```
+
+You should also have a local kubeconfig file you can use with most k8s utilities. Similar to the above usage is the same:
+```sh
+KUBECONFIG=$(find ~/.cache/shenanigans -name config -path '*/upstream/*kube/*') kubectl get nodes
+NAME                         STATUS   ROLES                       AGE     VERSION
+luckily-clean-piranha        Ready    control-plane,etcd,master   8m32s   v1.27.14+rke2r1
+violently-crucial-tortoise   Ready    <none>                      6m5s    v1.27.14+rke2r1
+```
+
+Or via the stack output:
+```sh
+KUBECONFIG=$(pulumi stack output upstream:kube-config) kubectl get nodes
+NAME                         STATUS   ROLES                       AGE     VERSION
+luckily-clean-piranha        Ready    control-plane,etcd,master   10m     v1.27.14+rke2r1
+violently-crucial-tortoise   Ready    <none>                      7m41s   v1.27.14+rke2r1
 ```
 
 ## k3s/rke2 specific
