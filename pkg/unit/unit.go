@@ -8,20 +8,22 @@ import (
 
 // Unit record data
 type UserUnit struct {
-	After  []string
-	Config []vm.UserConfig
-	Kind   string
-	Name   string
-	Online bool
+	After     []string
+	Config    []vm.UserConfig
+	Kind      string
+	Name      string
+	Online    bool
+	Helmfiles []string
 	//	Provider string //TODO for the future
 }
 
 type Unit struct {
-	After  []string
-	Config []vm.Config
-	Kind   string
-	Name   string
-	Online bool
+	After     []string
+	Config    []vm.Config
+	Kind      string
+	Name      string
+	Online    bool
+	Helmfiles []string
 }
 
 // Custom format function for debugging more simply.
@@ -42,6 +44,7 @@ func (uu UserUnit) ToUnit() (u Unit, e error) {
 	u.Kind = uu.Kind
 	u.Name = uu.Name
 	u.Online = uu.Online
+	u.Helmfiles = uu.Helmfiles
 	var configs []vm.Config
 
 	for _, uc := range uu.Config {

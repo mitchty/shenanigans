@@ -1,9 +1,0 @@
----
-releases:
-  - name: kube-vip
-    namespace: kube-system
-    chart: ../kube-vip
-    wait: true
-    # set:
-    #   - name: crds.enabled
-    #     value: true

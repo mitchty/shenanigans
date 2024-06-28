@@ -223,11 +223,10 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 	// Assign resources based off their config name later
 	unitMap := map[string][]unitDepends{}
 
-	fmt.Printf("unit: %s\n", unit.Name)
 	for _, config := range unit.Config {
-		fmt.Printf("config: %v\n", config)
+		ctx.Export(fmt.Sprintf("dbg:%s:%s", unit.Name, config.Name), pulumi.Sprintf("%v", unit.Name))
+		ctx.Export(fmt.Sprintf("dbg:%s:%s:state", unit.Name, config.Name), pulumi.Sprintf("%s", state))
 
-		fmt.Printf("%s\n", state)
 		cacheSource := path.Join(state.Cache(), config.Qcow2)
 		instLink, err := state.RegisterArtifact(fmt.Sprintf("%s/%s.qcow2", unit.Name, config.Name))
 		if err != nil {
@@ -494,14 +493,12 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 
 			// Setup the map we'll abuse for k8s kinds and others maybe.
 			if config.Name == "default" && idx == 0 {
-				fmt.Printf("dbg: prime host %s\n", hostName)
 				prime = unitDepends{
 					Host:     hostName,
 					Domain:   *domain,
 					Resource: vmSetup,
 				}
 			} else {
-				fmt.Printf("dbg: adding host %s to config.Name %s\n", hostName, config.Name)
 				unitMap[config.Name] = append(unitMap[config.Name], unitDepends{
 					Host:     hostName,
 					Domain:   *domain,
@@ -615,15 +612,10 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 
 		ctx.Export(kubeName, pulumi.String(localKubeconfig))
 
-		//		fmt.Printf("len of unit %s agents is %d\n", unit.Name, len(unitMap["agent"]))
-
 		// The rest of the control-plane/admin/server nodes (if any)
 		var defaultInstalls []pulumi.Resource
 		for _, vm := range unitMap["default"] {
-			fmt.Printf("agent:%s:%s", unit.Name, prime.Host)
 			ip4 := vm.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Addresses().Index(pulumi.Int(0))
-			// primehost := prime.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Hostname().Elem()
-			fmt.Printf("unit %s host %s\n", unit.Name, vm.Host)
 			keyConnectionArgs := remote.ConnectionArgs{
 				Host:       ip4,
 				User:       pulumi.String("root"),
@@ -647,10 +639,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 		// Wait for the node to become Ready first.
 		// Kick off the agent installs next, we'll do control plane nodes last
 		for _, vm := range unitMap["agent"] {
-			fmt.Printf("agent:%s:%s", unit.Name, prime.Host)
 			ip4 := vm.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Addresses().Index(pulumi.Int(0))
-			// primehost := prime.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Hostname().Elem()
-			fmt.Printf("unit %s host %s\n", unit.Name, vm.Host)
 			keyConnectionArgs := remote.ConnectionArgs{
 				Host:       ip4,
 				User:       pulumi.String("root"),
@@ -689,16 +678,48 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 		// later usage that doesn't depend directly upon the
 		// prime node.
 		if unit.Name == "upstream" && os.Getenv("NOHELMFILE") == "" {
-			helmfileApply, err := local.NewCommand(ctx,
-				fmt.Sprintf("%s helmfile apply", unit.Name),
-				&local.CommandArgs{
-					Create: pulumi.Sprintf("cd helm && env KUBECONFIG=%s helmfile apply", localKubeconfig),
-				}, pulumi.DependsOn(vmDepends))
 
-			if err != nil {
-				return err
+			// Loop through the helmfiles, kube-vip string
+			// is special and just has us rewrite the
+			// kubeconfig to use the vip. Beyond that its
+			// kinda like using helmfiles.d just setup
+			// this way for now to let me rewrite the
+			// kubeconfig in use.
+			for _, hf := range unit.Helmfiles {
+				helmfileApply, err := local.NewCommand(ctx,
+					fmt.Sprintf("%s helmfile apply %s", unit.Name, hf),
+					&local.CommandArgs{
+						Create: pulumi.Sprintf("cd helmfiles/%s && env KUBECONFIG=%s helmfile apply", hf, localKubeconfig),
+					}, pulumi.DependsOn(vmDepends))
+
+				if err != nil {
+					return err
+				}
+				vmDepends = append(vmDepends, helmfileApply)
+				// Rewrite the kubeconfig artifact to use kube vip after its applied
+				if hf == "kube-vip" {
+					primeip4 := prime.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Addresses().Index(pulumi.Int(0))
+					localKubeconfig, err := state.RegisterArtifact(fmt.Sprintf("/%s/kube-vip/config", unit.Name))
+					if err != nil {
+						return err
+					}
+
+					remoteKubeconfig := "/etc/rancher/rke2/rke2.yaml"
+					kubeVip := netconfig.Hosts[0].Ipv4
+
+					// TODO setup a provider using the file and return that as an output someday
+					kubeVipFile, err := local.NewCommand(ctx,
+						fmt.Sprintf("%s kube-vip kubeconfig", unit.Name),
+						&local.CommandArgs{
+							Create: pulumi.Sprintf("ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o IdentityFile=%s root@%s 'cat %s | sed -e \"s/127.0.0.1/%s/\"' > %s && chmod 600 %s", *key.PrvKeyFile, primeip4, remoteKubeconfig, kubeVip, localKubeconfig, localKubeconfig),
+						}, pulumi.DependsOn(k8sDepends))
+
+					if err != nil {
+						return err
+					}
+					vmDepends = append(vmDepends, kubeVipFile)
+				}
 			}
-			vmDepends = append(vmDepends, helmfileApply)
 		}
 	}
 

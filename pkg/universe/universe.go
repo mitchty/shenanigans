@@ -165,8 +165,7 @@ func NewUniverse(ctx *pulumi.Context, name string, opts ...pulumi.ResourceOption
 	err = cmd.Run()
 	if err != nil {
 		outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-		fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
-		fmt.Printf("cmd.Run() failed with %s\n", err)
+		fmt.Printf("out:\n%s\nerr:\n%s\ncmd.Run() failed with %s\n", outStr, errStr, err)
 		return gamma, err
 	}
 

@@ -13,8 +13,9 @@ For now it is libvirt only but it is written in pulumi using golang so the inten
 To use download pulumi and golang go here, this readme will not cover installing dependencies:
 - [pulumi](https://www.pulumi.com/docs/get-started/install/) Tested version: v3.94.0
 - [go](https://go.dev/dl/) Tested version: 1.21.6
+- *FOR NOW* (this may not be a permanent requirement if I can figure out the helmfile library) [helmfile](https://github.com/helmfile/helmfile)
 
-Note that there is an *.envrc* file that will use nix and setup all dependencies for you if you use *direnv*. Other versions of golang or pulumi may work but are untested.
+Note that there is an *.envrc* file that will use nix and setup all dependencies for you if you use *direnv*. Other versions of golang, pulumi, and helmfile may work but are untested. Caveat emptor.
 
 ## First time setup
 

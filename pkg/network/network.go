@@ -87,7 +87,10 @@ func (un UserNetwork) ToNetwork() (n Network, e error) {
 			cidr.IPDecr(autoIp)
 			autoIp = thisIp
 			hosts = append(hosts, Host{Fqdn: fqdn, Name: name, Ipv4: fmt.Sprintf("%s", thisIp)})
-		} // TODO add checking/parsing of ip's to make sure they fit in the cidr
+			// TODO add checking/parsing of ip's to make sure they fit in the cidr
+		} else {
+			hosts = append(hosts, Host{Fqdn: fqdn, Name: name, Ipv4: v.Ip})
+		}
 	}
 	n.Hosts = hosts
 

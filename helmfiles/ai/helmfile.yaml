@@ -1,0 +1,18 @@
+---
+helmDefaults:
+  wait: true
+  timeout: 900
+repositories:
+  - name: ollama
+    url: https://otwld.github.io/ollama-helm/
+  - name: open-webui
+    url: https://helm.openwebui.com/
+releases:
+  - name: ollama
+    chart: ollama/ollama
+    namespace: ai
+  - name: open-webui
+    chart: open-webui/open-webui
+    namespace: ai
+    needs:
+      - ai/ollama
