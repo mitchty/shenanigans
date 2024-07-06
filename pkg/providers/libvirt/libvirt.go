@@ -139,6 +139,32 @@ func SetupShared(ctx *pulumi.Context, state *cache.State, netconfig *network.Net
 
 	poolDir := path.Join(providerconfig.Pooldir, state.Uuid())
 
+	// TODO DO NOT COMMIT ME UNLESS TOTES LAZY
+	//
+	// I need to dig through how the hell this is implemented
+	// exactly but nothing obvious works nothing on github either
+	// so weee I am the first weiner.
+
+	hosts := libvirt.NetworkDnsHostArray{
+		&libvirt.NetworkDnsHostArgs{
+			Hostname: pulumi.String(netconfig.Hosts[0].Name),
+			Ip:       pulumi.String(netconfig.Hosts[0].Ipv4),
+		},
+	}
+
+	if len(netconfig.Hosts) == 2 {
+		hosts = libvirt.NetworkDnsHostArray{
+			&libvirt.NetworkDnsHostArgs{
+				Hostname: pulumi.String(netconfig.Hosts[0].Name),
+				Ip:       pulumi.String(netconfig.Hosts[0].Ipv4),
+			},
+			&libvirt.NetworkDnsHostArgs{
+				Hostname: pulumi.String(netconfig.Hosts[1].Name),
+				Ip:       pulumi.String(netconfig.Hosts[1].Ipv4),
+			},
+		}
+	}
+
 	network, err := libvirt.NewNetwork(ctx, state.Uuid(), &libvirt.NetworkArgs{
 		// TODO: address range selection for ipv4/6? future me problem
 		Name: pulumi.String(state.Uuid()),
@@ -159,12 +185,7 @@ func SetupShared(ctx *pulumi.Context, state *cache.State, netconfig *network.Net
 			Enabled:   pulumi.Bool(true),
 			LocalOnly: pulumi.Bool(true), // Don't forward local requests otherwise we end up looping if this dnsmasq instance is queried from the outside.
 			// TODO Figure out the generator interface to dynamically create all the hosts we might need
-			Hosts: libvirt.NetworkDnsHostArray{
-				&libvirt.NetworkDnsHostArgs{
-					Hostname: pulumi.String(netconfig.Hosts[0].Name),
-					Ip:       pulumi.String(netconfig.Hosts[0].Ipv4),
-				},
-			},
+			Hosts: hosts,
 		},
 	}) //, pulumi.Parent(&resource), pulumi.DeleteBeforeReplace(true))
 	if err != nil {
@@ -403,6 +424,16 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 					return err
 				}
 				pkgInstalls = append(pkgInstalls, zypperInOpenIscsi)
+				enableIscsi, err := remote.NewCommand(ctx,
+					fmt.Sprintf("%s:%s systemctl enable iscsid", unit.Name, hostName),
+					&remote.CommandArgs{
+						Connection: keyConnectionArgs,
+						Create:     pulumi.String("systemctl enable iscsid --now"),
+					}, pulumi.DependsOn([]pulumi.Resource{zypperInOpenIscsi}))
+				if err != nil {
+					return err
+				}
+				pkgInstalls = append(pkgInstalls, enableIscsi)
 			}
 
 			componentName := "shenanigans:libvirt:vm"
@@ -686,6 +717,30 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 			// this way for now to let me rewrite the
 			// kubeconfig in use.
 			for _, hf := range unit.Helmfiles {
+				primeip4 := prime.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Addresses().Index(pulumi.Int(0))
+
+				// So we don't depend on the aihack in the helmfile apply resource
+				var aiHack pulumi.Resource
+
+				// What to do before a helmfile is applied (if any...)
+				switch hf {
+				case "ai":
+					keyConnectionArgs := remote.ConnectionArgs{
+						Host:       primeip4,
+						User:       pulumi.String("root"),
+						PrivateKey: pulumi.Sprintf("%s", *key.PrvKey),
+					}
+					aiHack, err = remote.NewCommand(ctx,
+						fmt.Sprintf("%s open-webui service vip hack", unit.Name),
+						&remote.CommandArgs{
+							Connection: keyConnectionArgs,
+							Create:     pulumi.Sprintf("%s hack", "/usr/local/sbin/remote"),
+						}, pulumi.DependsOn(vmDepends),
+					)
+					if err != nil {
+						return err
+					}
+				}
 				helmfileApply, err := local.NewCommand(ctx,
 					fmt.Sprintf("%s helmfile apply %s", unit.Name, hf),
 					&local.CommandArgs{
@@ -696,9 +751,12 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 					return err
 				}
 				vmDepends = append(vmDepends, helmfileApply)
-				// Rewrite the kubeconfig artifact to use kube vip after its applied
-				if hf == "kube-vip" {
-					primeip4 := prime.Domain.NetworkInterfaces.Index(pulumi.Int(0)).Addresses().Index(pulumi.Int(0))
+
+				// Rewrite the kubeconfig artifact to use kube vip after its applied mostly
+				switch hf {
+				case "ai":
+					vmDepends = append(vmDepends, aiHack)
+				case "kube-vip":
 					localKubeconfig, err := state.RegisterArtifact(fmt.Sprintf("/%s/kube-vip/config", unit.Name))
 					if err != nil {
 						return err

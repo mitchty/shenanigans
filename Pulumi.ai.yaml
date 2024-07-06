@@ -75,16 +75,17 @@ config:
       helmfiles:
         - kube-vip
         - rancher
+        - ai
       config:
         - name: default
           count: 1
           qcow2: *boot
-          disksize: "40G"
-          memory: "6G"
+          disksize: "80G"
+          memory: "8G"
           cpu: 4
         - name: agent
           count: 1
           qcow2: *boot
-          disksize: "40G"
+          disksize: "80G"
           memory: "16G"
           cpu: 8

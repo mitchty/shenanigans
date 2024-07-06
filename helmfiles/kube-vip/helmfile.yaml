@@ -2,7 +2,18 @@
 helmDefaults:
   wait: true
   timeout: 300
+repositories:
+- name: incubator
+  url: https://charts.helm.sh/incubator
 releases:
-  - name: kube-vip
-    namespace: kube-system
-    chart: ./kube-vip
+- name: kube-vip
+  namespace: kube-system
+  chart: incubator/raw
+  version: 0.1.0
+  hooks:
+    - events: ["prepare", "presync"]
+      command: "kubectl"
+      args:
+        - "apply"
+        - "-f"
+        - "kube-vip.yaml"
