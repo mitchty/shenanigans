@@ -1,0 +1,40 @@
+---
+helmDefaults:
+  wait: true
+  timeout: 900
+repositories:
+  - name: mitchty
+    url: https://mitchty.github.io/helm-canary
+releases:
+  - name: helm-canary
+    chart: mitchty/helm-canary
+    namespace: demo
+    version: v0.0.1
+    hooks:
+      - events: ["prepare", "presync"]
+        command: "kubectl"
+        args:
+          - "apply"
+          - "-f"
+          - "kube-vip-cloud-controller.yaml"
+    values:
+      - ingress:
+          enabled: true
+          className: nginx
+          host: demo.dev.home.arpa
+          tls: false
+          annotations:
+            "kube-vip.io/loadbalancerIPs": 10.200.200.253
+        service:
+          port: 80
+          type: LoadBalancer
+          loadBalancerClass: "kube-vip.io/kube-vip-class"
+          loadBalancerIP: 10.200.200.253
+        podLabels:
+          app: helm-canary
+          tier: frontend
+        image:
+          repository: ghcr.io/mitchty/helm-canary
+          tag: v0.0.3
+        redis:
+          replicas: 2
