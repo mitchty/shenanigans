@@ -39,7 +39,7 @@ func Cmd() error {
 				return err
 			}
 			fmt.Printf("%s\n", hostname)
-		case "hack":
+		case "aihack":
 			ready := false
 			// Loop forever until we see the service object
 			cnt := 0
@@ -91,7 +91,58 @@ func Cmd() error {
 				ready = true
 			}
 			fmt.Printf("hacked the vip for open-webui\n")
+		case "nexushack":
+			ready := false
+			// Loop forever until we see the service object
+			cnt := 0
+			for ok := true; ok; ok = !ready {
+				cnt = cnt + 1
+				// sigh, work around nonsense I shouldn't have to.
+				kubeConfig := "/root/.kube/config"
+				// Use the kubeconfig and the kube api to wait for node to become Ready
+				config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+				if err != nil {
+					fmt.Printf("k8s config error %d\n", cnt)
+					time.Sleep(1 * time.Second)
+					continue
+				}
 
+				// Create a dynamic client
+				dynamicClient, err := dynamic.NewForConfig(config)
+				if err != nil {
+					fmt.Printf("k8s dynclient error %d\n", cnt)
+					time.Sleep(1 * time.Second)
+					continue
+				}
+
+				// Define the GVR (GroupVersionResource) for the Service
+				gvr := schema.GroupVersionResource{
+					Group:    "",
+					Version:  "v1",
+					Resource: "services",
+				}
+
+				// Get the Service object
+				service, err := dynamicClient.Resource(gvr).Namespace("nexus").Get(context.TODO(), "nexus-nexus-repository-manager", metav1.GetOptions{})
+				if err != nil {
+					fmt.Printf("service crd error %d\n", cnt)
+					time.Sleep(1 * time.Second)
+					continue
+				}
+
+				// Add an arbitrary key-value pair to the spec field
+				unstructured.SetNestedField(service.Object, "10.200.200.253", "spec", "loadBalancerIP")
+
+				// Update the Service object
+				_, err = dynamicClient.Resource(gvr).Namespace("nexus").Update(context.TODO(), service, metav1.UpdateOptions{})
+				if err != nil {
+					fmt.Printf("add vip ip address %d\n", cnt)
+					time.Sleep(1 * time.Second)
+					continue
+				}
+				ready = true
+			}
+			fmt.Printf("hacked the vip for nexus\n")
 		case "k8s": // k8s subcommand hard coded to rke2 for now
 			if len(os.Args) > 2 {
 				switch os.Args[2] {

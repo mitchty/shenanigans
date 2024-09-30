@@ -122,6 +122,7 @@ func SetupShared(ctx *pulumi.Context, state *cache.State, netconfig *network.Net
 	// TODOIf I let people specify this in the config how do I make sure its sane?
 	//	if providerconfig.Pooldir == "" {
 	providerconfig.Pooldir = "/var/lib/libvirt/shenanigans"
+	//	providerconfig.Pooldir = "/tank/libvirt/shenanigans"
 	//	}
 
 	provider, err := libvirt.NewProvider(ctx, "provider", &libvirt.ProviderArgs{
@@ -721,6 +722,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 
 				// So we don't depend on the aihack in the helmfile apply resource
 				var aiHack pulumi.Resource
+				var nexusHack pulumi.Resource
 
 				// What to do before a helmfile is applied (if any...)
 				switch hf {
@@ -734,7 +736,23 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 						fmt.Sprintf("%s open-webui service vip hack", unit.Name),
 						&remote.CommandArgs{
 							Connection: keyConnectionArgs,
-							Create:     pulumi.Sprintf("%s hack", "/usr/local/sbin/remote"),
+							Create:     pulumi.Sprintf("%s aihack", "/usr/local/sbin/remote"),
+						}, pulumi.DependsOn(vmDepends),
+					)
+					if err != nil {
+						return err
+					}
+				case "nexus":
+					keyConnectionArgs := remote.ConnectionArgs{
+						Host:       primeip4,
+						User:       pulumi.String("root"),
+						PrivateKey: pulumi.Sprintf("%s", *key.PrvKey),
+					}
+					nexusHack, err = remote.NewCommand(ctx,
+						fmt.Sprintf("%s nexus service vip hack", unit.Name),
+						&remote.CommandArgs{
+							Connection: keyConnectionArgs,
+							Create:     pulumi.Sprintf("%s nexushack", "/usr/local/sbin/remote"),
 						}, pulumi.DependsOn(vmDepends),
 					)
 					if err != nil {
@@ -756,6 +774,8 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 				switch hf {
 				case "ai":
 					vmDepends = append(vmDepends, aiHack)
+				case "nexus":
+					vmDepends = append(vmDepends, nexusHack)
 				case "kube-vip":
 					localKubeconfig, err := state.RegisterArtifact(fmt.Sprintf("/%s/kube-vip/config", unit.Name))
 					if err != nil {

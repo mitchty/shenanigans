@@ -1,0 +1,40 @@
+---
+helmDefaults:
+  wait: true
+  timeout: 900
+repositories:
+  - name: sonatype
+    url: https://sonatype.github.io/helm3-charts/
+releases:
+  - name: nexus
+    chart: sonatype/nexus-repository-manager
+    namespace: nexus
+    hooks:
+      - events: [ "prepare", "presync" ]
+        command: "kubectl"
+        args:
+          - "apply"
+          - "-f"
+          - "kube-vip-cloud-controller.yaml"
+      - events: [ "postsync" ]
+        command: "nexus-postinstall.sh"
+    values:
+      - ingress:
+          enabled: true
+          ingressClassName: nginx
+          hostRepo: nexus.dev.home.arpa
+          # tls:
+          #   - secretName: nexus-cert
+          #     hosts:
+          #       - nexus.dev.home.arpa
+          annotations:
+            "kube-vip.io/loadbalancerIPs": 10.200.200.253
+        service:
+          type: LoadBalancer
+          loadBalancerClass: "kube-vip.io/kube-vip-class"
+          loadBalancerIP: 10.200.200.253
+
+        secret:
+          nexusAdminSecret:
+            enabled: true
+            adminPassword: "changeme"
