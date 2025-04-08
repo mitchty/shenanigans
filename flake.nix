@@ -1,43 +1,18 @@
 {
   description = "quickstart shenanigans";
 
-  inputs =
-    {
-      nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/release-24.11";
 
-      devshell.url = "github:numtide/devshell";
-      flake-utils.url = "github:numtide/flake-utils";
-
-      flake-compat = {
-        url = "github:edolstra/flake-compat";
-        flake = false;
-      };
+    flakelight = {
+      url = "github:nix-community/flakelight";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+  };
 
-  outputs = { self, flake-utils, devshell, nixpkgs, ... }:
-    flake-utils.lib.eachDefaultSystem (system: {
-      devShells.default =
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-
-            overlays = [ devshell.overlays.default ];
-          };
-        in
-        pkgs.devshell.mkShell {
-          imports = [ (pkgs.devshell.importTOML ./devshell.toml) ];
-          packages = with pkgs; [
-            (pkgs.wrapHelm pkgs.kubernetes-helm { plugins = [ pkgs.kubernetes-helmPlugins.helm-diff ]; })
-            pulumi-bin
-            go_1_21
-            kubectl
-            jq
-            libvirt
-            helmfile-wrapped
-            k9s
-            cdrkit # for libvirt mkisofs
-            gptfdisk
-          ];
-        };
-    });
+  outputs =
+    { flakelight, ... }@inputs:
+    flakelight ./. rec {
+      #      imports = [ (pkgs.devshell.importTOML ./devshell.toml) ];
+    };
 }

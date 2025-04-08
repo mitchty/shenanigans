@@ -75,17 +75,18 @@ config:
       helmfiles:
         - kube-vip
         - rancher
+        - cert-manager
         - ai
       config:
         - name: default
           count: 1
           qcow2: *boot
-          disksize: "80G"
+          disksize: "200G"
           memory: "8G"
-          cpu: 4
+          cpu: 8
         - name: agent
-          count: 1
+          count: 2
           qcow2: *boot
-          disksize: "80G"
-          memory: "16G"
+          disksize: "200G"
+          memory: "32G"
           cpu: 8

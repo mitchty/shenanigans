@@ -1,0 +1,29 @@
+---
+helmDefaults:
+  wait: true
+  timeout: 900
+repositories:
+  - name: milvus
+    url: https://zilliztech.github.io/milvus-helm/
+  - name: milvus-operator
+    url: https://zilliztech.github.io/milvus-operator/
+releases:
+  - name: milvus-operator
+    chart: milvus-operator/milvus-operator
+    namespace: milvus
+  #   hooks:
+  #     - events: ["
+  # - name: milvus
+  #   chart: milvus/milvus
+  #   namespace: milvus
+  #   needs:
+  #     - milvus/milvus-operator
+    # values:
+    #   - cluster:
+    #       enabled: true
+    #     pulsar:
+    #       enabled: false
+    #     kafka:
+    #       enabled: true
+    #     minio:
+    #       mode: standalone

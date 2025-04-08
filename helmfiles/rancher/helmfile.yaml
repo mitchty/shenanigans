@@ -13,45 +13,51 @@ releases:
     namespace: cattle-system
 #    version: "2.8.4"
     chart: rancher/rancher
-    set:
-      - name: hostname
-        value: vip.dev.home.arpa
-      - name: bootstrapPassword
-        value: changeme
-      - name: ingress.tls.source
-        value: secret
-      - name: replicas
-        value: 1
+    values:
+      - hostname: vip.dev.home.arpa
+        bootstrapPassword: changeme
+        ingress:
+          tls:
+            source: secret
+        replicas: 1
   # Install longhorn/neuvector after rancher is setup
   - name: longhorn
     namespace: longhorn-system
     chart: longhorn/longhorn
-    set:
-      - name: defaultClassReplicaCount
-        value: 1
-      - name: csi.attacherReplicaCount
-        value: 1
-      - name: csi.provisionerReplicaCount
-        value: 1
-      - name: csi.resizerReplicaCount
-        value: 1
-      - name: csi.snapshotterReplicaCount
-        value: 1
+    values:
+      - defaultClassReplicaCount: 1
+        csi:
+          attacherReplicaCount: 1
+          provisionerReplicaCount: 1
+          resizerReplicaCount: 1
+          snapshotterReplicaCount: 1
   - name: neuvector
     namespace: cattle-neuvector-system
     chart: neuvector/core
-    set:
-      - name: global.cattle.url
-        value: https://vip.dev.home.arpa
-      - name: controller.ranchersso.enabled
-        value: true
-      - name: rbac
-        value: true
-      - name: k3s.enabled
-        value: true
-      - name: cve.scanner.replicas
-        value: 1
-      - name: controller.replicas
-        value: 1
-      - name: manager.replicas
-        value: 1
+    values:
+      - global:
+          cattle:
+            url: https://vip.dev.home.arpa
+        rbac: true
+        controller:
+          ranchersso:
+            enabled: true
+          replicas: 1
+          configmap:
+            enabled: true
+          data:
+            sysinitcg.yaml:
+              New_Service_Profile_Baseline: basic
+              Scan_Config:
+                Auto_Scan: true
+        cve:
+          scanner:
+            replicas: 1
+        manager:
+          replicas: 1
+        # internal:
+        #   certmanager:
+        #     enabled: true
+        #     secretname: neuvector-internal
+        #   autoGenerateCert: true
+        #   autoRotateCert: false

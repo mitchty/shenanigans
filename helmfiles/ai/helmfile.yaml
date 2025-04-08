@@ -11,16 +11,24 @@ releases:
   - name: ollama
     chart: ollama/ollama
     namespace: ai
-    # TODO: reference external files for all this jazz
     values:
       - image:
           tag: latest
         persistentVolume:
           enabled: true
+          size: "50Gi"
       # - name: runtimeClassName
       #   value: nvidia
+        # ingress:
+        #   enabled: true
+        #   hosts:
+        #   - host: vip.dev.home.arpa
+        #     paths:
+        #       - path: /
+        #         pathType: Prefix
   - name: open-webui
     chart: open-webui/open-webui
+#    version: 3.6.0 # 0.3.35 open-webui
     namespace: ai
     hooks:
       - events: ["prepare", "presync"]
@@ -29,11 +37,40 @@ releases:
           - "apply"
           - "-f"
           - "kube-vip-cloud-controller.yaml"
+      - events: ["prepare"]
+        command: "sh"
+        args:
+          - "-c"
+          - "kubectl get all -A -o yaml > pre-ai.yaml"
+      - events: ["prepare"]
+        command: "sh"
+        args:
+          - "-c"
+          - "kubectl get pods --all-namespaces -o jsonpath=\"{.items[*].spec['initContainers', 'containers'][*].image}\" |tr -s '[[:space:]]' '\n' | sort -u > pre.containers"
+      - events: ["cleanup"]
+        command: "sh"
+        args:
+          - "-c"
+          - "kubectl get all -A -o yaml > post-ai.yaml"
+      - events: ["cleanup"]
+        command: "sh"
+        args:
+          - "-c"
+          - "kubectl get pods --all-namespaces -o jsonpath=\"{.items[*].spec['initContainers', 'containers'][*].image}\" |tr -s '[[:space:]]' '\n' | sort -u > post.containers"
     needs:
       - ai/ollama
     values:
       - image:
           tag: latest
+        extraEnvVars:
+          - name: WEBUI_AUTH
+            value: 'False'
+          - name: DO_NOT_TRACK
+            value: 'True'
+          - name: SCARF_NO_ANALYTICS
+            value: 'True'
+          - name: ANONYMIZED_TELEMETRY
+            value: 'False'
         ingress:
           className: nginx
           enabled: true

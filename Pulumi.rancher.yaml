@@ -61,7 +61,7 @@ config:
     hosts:
       - name: vip
         ip: auto
-      - name: ai
+      - name: demo
         ip: auto
     libvirt: nat # for now only nat, bridge coming soon
   shenanigans:units:
@@ -75,16 +75,17 @@ config:
       helmfiles:
         - kube-vip
         - rancher
+        - canary
       config:
         - name: default
           count: 1
           qcow2: *boot
           disksize: "40G"
-          memory: "6G"
+          memory: "4G"
           cpu: 4
         - name: agent
           count: 1
           qcow2: *boot
           disksize: "40G"
-          memory: "16G"
+          memory: "24G"
           cpu: 8

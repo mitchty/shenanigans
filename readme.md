@@ -93,7 +93,7 @@ Note: for k3s as we use the newer token setup that is similar to rke2, versions 
 
 Or for rke2:
 ```sh
-curl --silent 'https://api.github.com/repos/k3s-io/k3s/git/refs/tags' | jq -r '.[] | select(.ref) | .ref' | sed 's|refs/tags/||g' | grep -Ev rc | sort -u
+$ curl --silent 'https://api.github.com/repos/rancher/rke2/git/refs/tags' | jq -r '.[] | select(.ref) | .ref' | awk '!/rc|dev|preview/ {gsub("refs/tags/v", "");print}' | sort -t. -k 1,1nr -k 2,2nr -k 3,3nr | sed 's|refs/tags/||g' | grep -Ev rc | sort -u
 ```
 
 Simply add *| grep MAJOR.MINOR* to the end of the above commands to find the versions available for both.
