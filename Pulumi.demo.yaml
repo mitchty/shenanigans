@@ -1,0 +1,93 @@
+---
+encryptionsalt: "v1:JQi6QySC9hs=:v1:+WVAWjJTVa6CXN14:xZHy9M4mDpgp2ISPVTehsQXjZpLJ6g=="
+config:
+  # libvirt provider uri, this is the default
+  libvirt:uri: "qemu+unix:///system"
+  shenanigans:inputs:
+    - uri: "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-1.0.0-NoCloud-Build6.56.qcow2"
+      sha256sum: &boot "989f3aa9a1ef5a3e289620c7190c62831a6f1b9669506edab6f713a956e7a976"
+    # 1.27.14
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/sha256sum-amd64.txt"
+      sha256sum: "84b6b2a09cda4019aa01c018827cb36fd62f5d977187fdde87d113f89647bbdb"
+      remote:
+        dest: /tmp/rke2/sha256sum-amd64.txt
+        mode: "0600"
+        owner: root
+        group: root
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2.linux-amd64.tar.gz"
+      sha256sum: "48a96bc3817ff01633195a8e8be62f142f22924fc0c95a4604b57bdb6c10b411"
+      remote:
+        dest: /tmp/rke2/rke2.linux-amd64.tar.gz
+        mode: "0600"
+        owner: root
+        group: root
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images.linux-amd64.tar.zst"
+#      sha256sum: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      sha256sum: "5ee20d728d380aa2e999646a3a8e37c66fd244cdfd3775c50bae90033ec03b4b"
+      remote:
+        dest: /tmp/rke2/rke2-images.linux-amd64.tar.zst
+        mode: "0600"
+        owner: root
+        group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images-core.linux-amd64.tar.zst"
+    #   sha256sum: "af071244557fc12e6a0870ebfc5896fcd5786f40ffd590cb1efb979de3f021b0"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images-core.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images-cilium.linux-amd64.tar.zst"
+    #   sha256sum: "14d92a883d308b0a6246fcf61968a66c4bdb8c52a2eff28984aa7cd537170b1c"
+    #   remote:
+    #     dest: /tmp/rke2/rke2-images-cilium.linux-amd64.tar.zst
+    #     mode: "0600"
+    #     owner: root
+    #     group: root
+    # rke2 install.sh script
+    - uri: "https://get.rke2.io"
+      sha256sum: "fb2d0000208d9f471c5eca30ce37f5783ae781deb4d1cd5ff9b4a0031c44171b"
+      tags: [k8s,rke2,server]
+      remote:
+        dest: /tmp/rke2/install.sh
+        mode: "0755"
+        owner: root
+        group: root
+
+  # Note: all vm's are for now on one flat /24 ipv4 address range to
+  # simplify network layout.
+  shenanigans:network:
+    cidr: 10.200.200.1/24
+    domain: dev.home.arpa
+    hosts:
+      - name: vip
+        ip: auto
+      - name: demo
+        ip: auto
+    libvirt: nat # for now only nat, bridge coming soon
+  shenanigans:units:
+    - name: upstream
+      kind: k8s
+      online: true
+      # Helmfiles to apply in order (note its really a dir so you can
+      # do helmfiles.d in it if you want its just so I can "do stuff"
+      # per helmfile string. Only kube-vip matters atm to get
+      # kubeconfig with a vip on it.
+      helmfiles:
+        - kube-vip
+        - rancher
+        - cert-manager
+#        - chaos
+        - canary
+      config:
+        - name: default
+          count: 1
+          qcow2: *boot
+          disksize: "80G"
+          memory: "8G"
+          cpu: 8
+        - name: agent
+          count: 2
+          qcow2: *boot
+          disksize: "80G"
+          memory: "32G"
+          cpu: 8
