@@ -657,7 +657,7 @@ func Unit(ctx *pulumi.Context, state *cache.State, unit *unit.Unit, shared *Libv
 				fmt.Sprintf("%s:%s k8s admin --vip %s:%s", unit.Name, vm.Host, netconfig.Hosts[0].Ipv4, netconfig.Hosts[0].Fqdn),
 				&remote.CommandArgs{
 					Connection: keyConnectionArgs,
-					Create:     pulumi.Sprintf("%s k8s --upstream %s", "/usr/local/sbin/remote", primeip4),
+					Create:     pulumi.Sprintf("%s k8s --upstream %s --vip %s:%s", "/usr/local/sbin/remote", primeip4, netconfig.Hosts[0].Ipv4, netconfig.Hosts[0].Fqdn),
 				}, pulumi.DependsOn(k8sDepends),
 			)
 			defaultInstalls = append(defaultInstalls, anadmin)
