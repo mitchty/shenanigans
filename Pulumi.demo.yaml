@@ -7,36 +7,41 @@ config:
     - uri: "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-1.0.0-NoCloud-Build6.56.qcow2"
       sha256sum: &boot "989f3aa9a1ef5a3e289620c7190c62831a6f1b9669506edab6f713a956e7a976"
     # 1.27.14
-    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/sha256sum-amd64.txt"
-      sha256sum: "84b6b2a09cda4019aa01c018827cb36fd62f5d977187fdde87d113f89647bbdb"
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.32.5%2Brke2r1/sha256sum-amd64.txt"
+#      sha256sum: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      sha256sum: "cb9558b890c557f7c56fdde1ba14b387576552b9ebd6a38808e69b1f4470db64"
+#      sha256sum: "84b6b2a09cda4019aa01c018827cb36fd62f5d977187fdde87d113f89647bbdb" 1.27.4
       remote:
         dest: /tmp/rke2/sha256sum-amd64.txt
         mode: "0600"
         owner: root
         group: root
-    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2.linux-amd64.tar.gz"
-      sha256sum: "48a96bc3817ff01633195a8e8be62f142f22924fc0c95a4604b57bdb6c10b411"
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.32.5%2Brke2r1/rke2.linux-amd64.tar.gz"
+#      sha256sum: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      sha256sum: "ea3d90462a9fcc3825ebff121e3654af657f3cbfae783c403594216a299a5c8f"
+#      sha256sum: "48a96bc3817ff01633195a8e8be62f142f22924fc0c95a4604b57bdb6c10b411" 1.27.4
       remote:
         dest: /tmp/rke2/rke2.linux-amd64.tar.gz
         mode: "0600"
         owner: root
         group: root
-    - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images.linux-amd64.tar.zst"
+    - uri: "https://github.com/rancher/rke2/releases/download/v1.32.5%2Brke2r1/rke2-images.linux-amd64.tar.zst"
 #      sha256sum: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-      sha256sum: "5ee20d728d380aa2e999646a3a8e37c66fd244cdfd3775c50bae90033ec03b4b"
+      sha256sum: "1cd46e0ea2c017fa0f8181911ef2a19372f10dcff681c00836d2ccc7fffee758"
+#      sha256sum: "5ee20d728d380aa2e999646a3a8e37c66fd244cdfd3775c50bae90033ec03b4b" 1.27.4
       remote:
         dest: /tmp/rke2/rke2-images.linux-amd64.tar.zst
         mode: "0600"
         owner: root
         group: root
-    # - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images-core.linux-amd64.tar.zst"
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.32.5%2Brke2r1/rke2-images-core.linux-amd64.tar.zst"
     #   sha256sum: "af071244557fc12e6a0870ebfc5896fcd5786f40ffd590cb1efb979de3f021b0"
     #   remote:
     #     dest: /tmp/rke2/rke2-images-core.linux-amd64.tar.zst
     #     mode: "0600"
     #     owner: root
     #     group: root
-    # - uri: "https://github.com/rancher/rke2/releases/download/v1.27.14%2Brke2r1/rke2-images-cilium.linux-amd64.tar.zst"
+    # - uri: "https://github.com/rancher/rke2/releases/download/v1.32.5%2Brke2r1/rke2-images-cilium.linux-amd64.tar.zst"
     #   sha256sum: "14d92a883d308b0a6246fcf61968a66c4bdb8c52a2eff28984aa7cd537170b1c"
     #   remote:
     #     dest: /tmp/rke2/rke2-images-cilium.linux-amd64.tar.zst
@@ -45,7 +50,9 @@ config:
     #     group: root
     # rke2 install.sh script
     - uri: "https://get.rke2.io"
-      sha256sum: "fb2d0000208d9f471c5eca30ce37f5783ae781deb4d1cd5ff9b4a0031c44171b"
+#      sha256sum: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      sha256sum: "ed6852ed23f956da1d9ea59eeb6906d10ff1ddf8a78fb16487afaee277c61543"
+#      sha256sum: "fb2d0000208d9f471c5eca30ce37f5783ae781deb4d1cd5ff9b4a0031c44171b"
       tags: [k8s,rke2,server]
       remote:
         dest: /tmp/rke2/install.sh

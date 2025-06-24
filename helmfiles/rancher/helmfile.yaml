@@ -34,30 +34,7 @@ releases:
   - name: neuvector
     namespace: cattle-neuvector-system
     chart: neuvector/core
+#    version: "2.8.1"
+#    version: "2.7.2"
     values:
-      - global:
-          cattle:
-            url: https://vip.dev.home.arpa
-        rbac: true
-        controller:
-          ranchersso:
-            enabled: true
-          replicas: 1
-          configmap:
-            enabled: true
-          data:
-            sysinitcg.yaml:
-              New_Service_Profile_Baseline: basic
-              Scan_Config:
-                Auto_Scan: true
-        cve:
-          scanner:
-            replicas: 1
-        manager:
-          replicas: 1
-        # internal:
-        #   certmanager:
-        #     enabled: true
-        #     secretname: neuvector-internal
-        #   autoGenerateCert: true
-        #   autoRotateCert: false
+      - "./neuvector/values.yaml"

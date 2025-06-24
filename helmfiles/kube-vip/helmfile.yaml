@@ -9,7 +9,6 @@ releases:
 - name: kube-vip
   namespace: kube-system
   chart: incubator/raw
-  version: 0.1.0
   hooks:
     - events: ["prepare", "presync"]
       command: "kubectl"
